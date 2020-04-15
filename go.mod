@@ -2,9 +2,9 @@ module github.com/daniel-gut/kure
 
 go 1.14
 
-replace github.com/daniel-gut/kure/cmd => ./kure/cmd
+// replace github.com/daniel-gut/kure/cmd => ./kure/cmd
 
-replace github.com/daniel-gut/kure/pkg/kure => ./kure/pkg/kure
+// replace github.com/daniel-gut/kure/pkg/kure => ./kure/pkg/kure
 
 require (
 	github.com/daniel-gut/kure/cmd v0.0.0-00010101000000-000000000000
