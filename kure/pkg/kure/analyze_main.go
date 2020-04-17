@@ -45,14 +45,22 @@ func Analyze(args []string) {
 	resourceType := strings.ToLower(args[0])
 	resourceName := strings.ToLower(args[1])
 
+	_ = resourceName
+
 	switch resourceType {
 	case deploymentNameConst:
 		fmt.Println("Deployments not yet supported")
 	case stsNameConst:
 		fmt.Println("Statefulsets not yet supported")
 	case podNameConst:
-		_ = resourceName
-		getPods()
+		// getPods()
+		result, err := analyzeLog(resourceName)
+		if err != nil {
+			fmt.Errorf("Error while log analysis")
+		}
+
+		fmt.Println(result)
+
 	default:
 		fmt.Errorf("Unexpected argument %v", args)
 	}
