@@ -36,7 +36,7 @@ func IsValidAnalyzeObj(arg string) bool {
 }
 
 // Analyze is handling the different arguments
-func Analyze(args []string) {
+func Analyze(args []string) error {
 
 	if len(args) < 2 {
 		args = append(args, allDeploymentsConst)
@@ -54,17 +54,15 @@ func Analyze(args []string) {
 		fmt.Println("Statefulsets not yet supported")
 	case podNameConst:
 		// getPods()
-		result, err := analyzeLog(resourceName)
+		err := analyzeLog(resourceName)
 		if err != nil {
-			fmt.Errorf("Error while log analysis")
+			return fmt.Errorf("error during log analysis analyzeLog(): %w", err)
 		}
 
-		fmt.Println(result)
-
 	default:
-		fmt.Errorf("Unexpected argument %v", args)
+		return fmt.Errorf("Unexpected argument %v", args)
 	}
-
+	return nil
 }
 
 //getPods returns all pods in the cluster

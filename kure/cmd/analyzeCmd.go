@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/daniel-gut/kure/pkg/kure"
 	"github.com/spf13/cobra"
@@ -28,6 +29,10 @@ var analyzeCmd = &cobra.Command{
 	Short: "Analyze a component of the cluster. Usage: kure analyze [object]",
 	Long:  `Analyze a component`,
 	Run: func(cmd *cobra.Command, args []string) {
-		kure.Analyze(args)
+		err := kure.Analyze(args)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 	},
 }
