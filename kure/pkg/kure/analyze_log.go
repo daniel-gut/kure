@@ -31,7 +31,7 @@ func analyzeLog(podList []string) error {
 	)
 
 	for _, p := range podList {
-		fmt.Printf("Gettings logs for %s\n", p)
+		// fmt.Printf("Gettings logs for %s\n", p)
 
 		logList, err = getLogs(p)
 		if err != nil {
@@ -74,14 +74,18 @@ func printLogHistogram(logList []log) {
 func getLogs(podName string) ([]log, error) {
 
 	var (
-		// logs     []byte
-		logList []log
-		// logData  log
-		logSince int64
+		logList   []log
+		logSince  int64
+		namespace string
 	)
 
 	if logSince == 0 {
 		logSince = config.LogSinceDefault
+	}
+
+	namespace, err := clients.GetNamespaceFromKubeconfig()
+	if err != nil {
+		namespace = ""
 	}
 
 	k8sconfig := clients.GetConfig()
@@ -91,9 +95,9 @@ func getLogs(podName string) ([]log, error) {
 		panic(err.Error())
 	}
 
-	pod, err := clientset.CoreV1().Pods("api-services").Get(podName, metav1.GetOptions{})
+	pod, err := clientset.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("error getting pod for %w", err)
+		return nil, err
 	}
 	containers := pod.Spec.Containers
 
@@ -129,14 +133,12 @@ func getLogs(podName string) ([]log, error) {
 			if logData != (log{}) {
 				logList = append(logList, logData)
 			}
-
 		}
 
 		if len(logList) == 0 {
-			err := fmt.Errorf("No logs since %d seconds", logSince)
-			return nil, err
+			fmt.Printf("No logs in specified pods since %ds\n", logSince)
+			os.Exit(0)
 		}
-
 	}
 
 	return logList, nil
@@ -169,12 +171,9 @@ func parseLog(logRaw []byte, podName string) (log, error) {
 			panic(err.Error())
 		}
 
-		// fmt.Println(t)
-
 		if t.Unix() > (time.Now().Unix() - logSince) {
 			logData = log{timestamp: t, loglevel: "error", podName: podName}
 		}
-
 	}
 
 	return logData, nil

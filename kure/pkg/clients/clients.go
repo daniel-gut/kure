@@ -65,3 +65,17 @@ func GetEnv() string {
 	return env
 
 }
+
+// GetNamespaceFromKubeconfig fetches current namespace from Kubeconfig
+func GetNamespaceFromKubeconfig() (string, error) {
+
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	configOverrides := &clientcmd.ConfigOverrides{}
+	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, configOverrides)
+	namespace, _, err := config.Namespace()
+	if err != nil {
+		return "", err
+	}
+
+	return namespace, err
+}
