@@ -38,6 +38,10 @@ func IsValidAnalyzeObj(arg string) bool {
 // Analyze is handling the different arguments
 func Analyze(args []string) error {
 
+	var (
+		podList []string
+	)
+
 	if len(args) < 2 {
 		args = append(args, allDeploymentsConst)
 	}
@@ -45,16 +49,20 @@ func Analyze(args []string) error {
 	resourceType := strings.ToLower(args[0])
 	resourceName := strings.ToLower(args[1])
 
-	_ = resourceName
-
 	switch resourceType {
 	case deploymentNameConst:
 		fmt.Println("Deployments not yet supported")
 	case stsNameConst:
 		fmt.Println("Statefulsets not yet supported")
 	case podNameConst:
-		// getPods()
-		err := analyzeLog(resourceName)
+
+		if resourceName == allDeploymentsConst {
+			return fmt.Errorf("error: no Pod name provided")
+		}
+		podList = append(podList, resourceName)
+
+		err := analyzeLog(podList)
+
 		if err != nil {
 			return fmt.Errorf("error during log analysis analyzeLog(): %w", err)
 		}
