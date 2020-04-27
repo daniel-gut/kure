@@ -102,6 +102,7 @@ func getLogs(podName string) ([]log, error) {
 	containers := pod.Spec.Containers
 
 	// Get logs for all containers
+	logsAvailable := false
 	for _, c := range containers {
 
 		logOptions := &corev1.PodLogOptions{
@@ -109,7 +110,7 @@ func getLogs(podName string) ([]log, error) {
 			Follow:    false,
 		}
 
-		req := clientset.CoreV1().Pods("api-services").GetLogs(podName, logOptions)
+		req := clientset.CoreV1().Pods(namespace).GetLogs(podName, logOptions)
 
 		stream, err := req.Stream()
 		if err != nil {
@@ -135,10 +136,15 @@ func getLogs(podName string) ([]log, error) {
 			}
 		}
 
-		if len(logList) == 0 {
-			fmt.Printf("No logs in specified pods since %ds\n", logSince)
-			os.Exit(0)
+		if len(logList) > 0 {
+			logsAvailable = true
 		}
+
+	}
+
+	if logsAvailable == false {
+		fmt.Printf("No logs in specified pods since %ds\n", logSince)
+		os.Exit(0)
 	}
 
 	return logList, nil
@@ -159,7 +165,7 @@ func parseLog(logRaw []byte, podName string) (log, error) {
 	a := regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}`) // 2020-04-14T07:04:19
 	tsd := a.FindAll(logRaw, -1)
 
-	loc, err := time.LoadLocation("UCT")
+	loc, err := time.LoadLocation("UTC")
 	if err != nil {
 		panic(err.Error())
 	}
