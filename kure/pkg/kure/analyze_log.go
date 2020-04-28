@@ -31,20 +31,12 @@ func analyzeLog(podList []string) error {
 	)
 
 	for _, p := range podList {
-		// fmt.Printf("Gettings logs for %s\n", p)
 
-		logList, err = getLogs(p)
+		logListPod, err := getLogs(p)
 		if err != nil {
 			return err
 		}
-
-		// fmt.Println(logData)
-		// // logData = []byte(logMockData)
-
-		// logList, err = parseLog(logData, p)
-		// if err != nil {
-		// 	return err
-		// }
+		logList = append(logList, logListPod...)
 	}
 
 	printLogHistogram(logList)
@@ -88,9 +80,7 @@ func getLogs(podName string) ([]log, error) {
 		namespace = ""
 	}
 
-	k8sconfig := clients.GetConfig()
-
-	clientset, err := kubernetes.NewForConfig(k8sconfig)
+	clientset, err := kubernetes.NewForConfig(k8sConfig)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -162,7 +152,8 @@ func parseLog(logRaw []byte, podName string) (log, error) {
 		logSince = config.LogSinceDefault
 	}
 
-	a := regexp.MustCompile(`\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}`) // 2020-04-14T07:04:19
+	a := regexp.MustCompile(`\d{4}-\d{2}-\d{2}(\ |T)\d{2}:\d{2}:\d{2}`) // 2020-04-28 07:16:00 or 2020-04-14T07:04:19
+
 	tsd := a.FindAll(logRaw, -1)
 
 	loc, err := time.LoadLocation("UTC")
