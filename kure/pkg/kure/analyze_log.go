@@ -12,6 +12,7 @@ import (
 	"github.com/aybabtme/uniplot/histogram"
 	"github.com/daniel-gut/kure/pkg/clients"
 	"github.com/daniel-gut/kure/pkg/config"
+	"github.com/daniel-gut/kure/pkg/graph"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -39,12 +40,20 @@ func analyzeLog(podList []string) error {
 		logList = append(logList, logListPod...)
 	}
 
-	printLogHistogram(logList)
+	// printLogHistogramTimestamp(logList)
+	// // printLogHistogramPodName(logList)
+
+	mockData := map[string]float64{
+		"pod1": 13245215,
+		"pod2": 9342344,
+		"po qwe qwed adsf as da a da  da da dsf a fdas fa d ads fas": 13452345,
+	}
+	graph.Print(mockData)
 
 	return err
 }
 
-func printLogHistogram(logList []log) {
+func printLogHistogramTimestamp(logList []log) {
 
 	var timestampList []float64
 
@@ -54,13 +63,37 @@ func printLogHistogram(logList []log) {
 
 	hist := histogram.Hist(10, timestampList)
 
+	err := histogram.Fprintf(os.Stdout, hist, histogram.Linear(20), func(v float64) string {
+		return time.Unix(int64(v), 0).Format("15:04:05")
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func printLogHistogramPodName(logList []log) {
+
+	var timestampList []float64
+
+	unique := make(map[string]bool)
+	for _, l := range logList {
+		if !unique[l.podName] {
+			unique[l.podName] = true
+		}
+	}
+
+	for _, log := range logList {
+		timestampList = append(timestampList, float64(log.timestamp.Unix()))
+	}
+
+	hist := histogram.Hist(20, timestampList)
+
 	err := histogram.Fprintf(os.Stdout, hist, histogram.Linear(10), func(v float64) string {
 		return time.Unix(int64(v), 0).Format("15:04:05")
 	})
 	if err != nil {
 		panic(err)
 	}
-
 }
 
 func getLogs(podName string) ([]log, error) {
