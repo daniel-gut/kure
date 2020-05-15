@@ -144,7 +144,7 @@ func getDeploymentsPods(resourceName string) ([]string, error) {
 		return nil, err
 	}
 	if len(deployment.Items) == 0 {
-		return nil, fmt.Errorf("no deployment found with name: %s", resourceName)
+		return nil, fmt.Errorf("no deployment found with name: %s in namespace: %v", resourceName, namespace)
 	}
 
 	for _, d := range deployment.Items {

@@ -56,11 +56,11 @@ func GetConfig() *rest.Config {
 func GetEnv() string {
 	_, err := net.LookupHost("kube-dns.kube-system")
 	if err != nil {
-		fmt.Println("Assuming running outside K8S Cluster")
+		// fmt.Println("Assuming running outside K8S Cluster")
 		env := "non-k8s"
 		return env
 	}
-	fmt.Println("Assuming running inside K8S Cluster")
+	// fmt.Println("Assuming running inside K8S Cluster")
 	env := "k8s"
 	return env
 

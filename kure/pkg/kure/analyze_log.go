@@ -22,6 +22,12 @@ type log struct {
 	timestamp time.Time
 	podName   string
 	loglevel  string
+	nodeName  string
+}
+
+type bucketData struct {
+	logs       []log
+	bucketName string // Field of the "log" type to be the bucket Key
 }
 
 func analyzeLog(podList []string) error {
@@ -44,11 +50,18 @@ func analyzeLog(podList []string) error {
 	// // printLogHistogramPodName(logList)
 
 	mockData := map[string]float64{
-		"pod1": 13245215,
-		"pod2": 9342344,
-		"po qwe qwed adsf as da a da  da da dsf a fdas fa d ads fas": 13452345,
+		"pod1": 132455,
+		"pod2": 934234,
+		"po qwe qwed adsf as da a da  da da dsf a fdas fa d ads fas": 534523,
 	}
-	graph.Print(mockData)
+	_ = mockData
+
+	bc, err := graph.MapToBarChart(mockData)
+	if err != nil {
+		return err
+	}
+
+	bc.Print()
 
 	return err
 }
@@ -207,4 +220,21 @@ func parseLog(logRaw []byte, podName string) (log, error) {
 	}
 
 	return logData, nil
+}
+
+func createBuckets(bd bucketData) {
+
+	switch bd.bucketName {
+	case "timestamp":
+		fmt.Printf("timestamp")
+	case "podName":
+		fmt.Printf("podName")
+	case "loglevel":
+		fmt.Printf("loglevel")
+	case "nodeName":
+		fmt.Printf("nodeName")
+	default:
+		fmt.Errorf("%s is a unknown field of type log", bd.bucketName)
+
+	}
 }

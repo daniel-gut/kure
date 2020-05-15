@@ -7,7 +7,8 @@ import (
 	"text/tabwriter"
 )
 
-type graphData struct {
+// GraphData is the required type to plot the graph
+type GraphData struct {
 	bucketName string
 	count      float64
 	ratio      float64
@@ -16,15 +17,7 @@ type graphData struct {
 // Print displays graph output
 func Print(rawData map[string]float64) {
 
-	const (
-		width  = 50
-		height = 20
-
-		cellEmpty = ' '
-		cellFull  = '█'
-	)
-
-	var gd = make([]graphData, len(rawData))
+	var gd = make([]GraphData, len(rawData))
 
 	// rewind the slice (allow appending from the beginning)
 	gd = gd[:0]
@@ -36,7 +29,7 @@ func Print(rawData map[string]float64) {
 			maxChars = len(k)
 		}
 
-		data := graphData{bucketName: k[:maxChars], count: v}
+		data := GraphData{bucketName: k[:maxChars], count: v}
 		gd = append(gd, data)
 
 	}
@@ -58,7 +51,7 @@ func MoveTopLeft() {
 	fmt.Print("\033[H")
 }
 
-func ratio(data []graphData) []graphData {
+func ratio(data []GraphData) []GraphData {
 	var sum float64
 
 	// calculate sum
@@ -74,7 +67,7 @@ func ratio(data []graphData) []graphData {
 	return data
 }
 
-func printGraph(gd []graphData) {
+func printGraph(gd []GraphData) {
 
 	writer := tabwriter.NewWriter(os.Stdout, 2, 2, 2, ' ', 0)
 
@@ -86,7 +79,7 @@ func printGraph(gd []graphData) {
 
 	for _, d := range gd {
 
-		barLength := int(d.ratio) / 2
+		barLength := int(d.ratio) / 2 // 100% == 50 Blocks
 		bar := strings.Repeat(string('█'), barLength)
 
 		output := fmt.Sprintf("%s\t%5.2f%%\t%s\t%5.0f", d.bucketName, d.ratio, bar, d.count)
