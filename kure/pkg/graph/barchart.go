@@ -8,7 +8,7 @@ type BarChart struct {
 	Ratio []float64
 }
 
-func PrintBarChart(rawData []map[string]string) error {
+func PrintBarChart(rawData []string) error {
 
 	bc, err := fillData(rawData)
 	if err != nil {
@@ -20,31 +20,19 @@ func PrintBarChart(rawData []map[string]string) error {
 	return nil
 }
 
-func fillData(data []map[string]string) (*BarChart, error) {
-	var bc BarChart
+func fillData(data []string) (*BarChart, error) {
+	var (
+		bc BarChart
+	)
 
-	// need to find unique keys in map
-	// keyMap = uniqueKeys
-	// The n count for number of unique keys in map
+	uniqueKeys := make(map[string]float64)
+	for _, k := range data {
+		uniqueKeys[k]++
+	}
 
-	for _, m := range data {
-		for i := range m {
-
-			for j, key := range bc.Key {
-
-				if key == i {
-					bc.Count[j]++
-					fmt.Println(key + "=" + i)
-				} else {
-					bc.Key = append(bc.Key, i)
-					bc.Count = append(bc.Count, 1)
-				}
-			}
-			if len(bc.Key) == 0 {
-				bc.Key = append(bc.Key, i)
-				bc.Count = append(bc.Count, 1)
-			}
-		}
+	for k, v := range uniqueKeys {
+		bc.Key = append(bc.Key, k)
+		bc.Count = append(bc.Count, v)
 	}
 
 	bc.ratio()

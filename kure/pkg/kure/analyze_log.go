@@ -32,20 +32,9 @@ type bucketData struct {
 
 func analyzeLog(podList []string) error {
 
-	mockRawData := []map[string]string{
-		map[string]string{"pod2": "adsadf"},
-		map[string]string{"pod2": "adsadf"},
-		map[string]string{"pod2": "adsadf"},
-		map[string]string{"pod2": "adsadf"},
-		map[string]string{"pod2": "adsadf"},
-		map[string]string{"pod1": "adsadf"},
-	}
-	_ = mockRawData
-
 	var (
-		logList      []log
-		err          error
-		barchartData []map[string]string
+		logList []log
+		err     error
 	)
 
 	for _, p := range podList {
@@ -57,16 +46,16 @@ func analyzeLog(podList []string) error {
 		logList = append(logList, logListPod...)
 	}
 
+	var bcData []string
 	for _, l := range logList {
-		d, err := l.normalizeDataForPrint("podName")
+		key, err := l.normalizeDataForPrint("nodeName")
+		bcData = append(bcData, key)
 		if err != nil {
 			return err
 		}
-
-		barchartData = append(barchartData, d)
 	}
 
-	graph.PrintBarChart(barchartData)
+	graph.PrintBarChart(bcData)
 
 	return err
 }
@@ -227,33 +216,34 @@ func parseLog(logRaw []byte, podName string) (log, error) {
 	return logData, nil
 }
 
-func createBuckets(bd bucketData) {
+// func createBuckets(bd bucketData) {
 
-	switch bd.bucketName {
-	case "timestamp":
-		fmt.Printf("timestamp")
-	case "podName":
-		fmt.Printf("podName")
-	case "loglevel":
-		fmt.Printf("loglevel")
-	case "nodeName":
-		fmt.Printf("nodeName")
-	default:
-		fmt.Errorf("%s is a unknown field of type log", bd.bucketName)
+// 	switch bd.bucketName {
+// 	case "timestamp":
+// 		fmt.Printf("timestamp")
+// 	case "podName":
+// 		fmt.Printf("podName")
+// 	case "loglevel":
+// 		fmt.Printf("loglevel")
+// 	case "nodeName":
+// 		fmt.Printf("nodeName")
+// 	default:
+// 		fmt.Errorf("%s is a unknown field of type log", bd.bucketName)
 
-	}
-}
+// 	}
+// }
 
-func (log log) normalizeDataForPrint(keyName string) (map[string]string, error) {
+func (log log) normalizeDataForPrint(keyName string) (string, error) {
 
-	data := make(map[string]string)
+	var key string
 
 	switch keyName {
 	case "podName":
-		data[log.podName] = "blabal"
+		key = log.podName
 	case "nodeName":
+		key = log.nodeName
 	default:
-		return nil, fmt.Errorf("error, keyName fieldname unknown %w", keyName)
+		return "", fmt.Errorf("error, keyName fieldname unknown %w", keyName)
 	}
-	return data, nil
+	return key, nil
 }
