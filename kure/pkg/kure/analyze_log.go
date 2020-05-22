@@ -32,9 +32,20 @@ type bucketData struct {
 
 func analyzeLog(podList []string) error {
 
+	mockRawData := []map[string]string{
+		map[string]string{"pod2": "adsadf"},
+		map[string]string{"pod2": "adsadf"},
+		map[string]string{"pod2": "adsadf"},
+		map[string]string{"pod2": "adsadf"},
+		map[string]string{"pod2": "adsadf"},
+		map[string]string{"pod1": "adsadf"},
+	}
+	_ = mockRawData
+
 	var (
-		logList []log
-		err     error
+		logList      []log
+		err          error
+		barchartData []map[string]string
 	)
 
 	for _, p := range podList {
@@ -46,22 +57,16 @@ func analyzeLog(podList []string) error {
 		logList = append(logList, logListPod...)
 	}
 
-	// printLogHistogramTimestamp(logList)
-	// // printLogHistogramPodName(logList)
+	for _, l := range logList {
+		d, err := l.normalizeDataForPrint("podName")
+		if err != nil {
+			return err
+		}
 
-	mockData := map[string]float64{
-		"pod1": 132455,
-		"pod2": 934234,
-		"po qwe qwed adsf as da a da  da da dsf a fdas fa d ads fas": 534523,
-	}
-	_ = mockData
-
-	bc, err := graph.MapToBarChart(mockData)
-	if err != nil {
-		return err
+		barchartData = append(barchartData, d)
 	}
 
-	bc.Print()
+	graph.PrintBarChart(barchartData)
 
 	return err
 }
@@ -237,4 +242,18 @@ func createBuckets(bd bucketData) {
 		fmt.Errorf("%s is a unknown field of type log", bd.bucketName)
 
 	}
+}
+
+func (log log) normalizeDataForPrint(keyName string) (map[string]string, error) {
+
+	data := make(map[string]string)
+
+	switch keyName {
+	case "podName":
+		data[log.podName] = "blabal"
+	case "nodeName":
+	default:
+		return nil, fmt.Errorf("error, keyName fieldname unknown %w", keyName)
+	}
+	return data, nil
 }

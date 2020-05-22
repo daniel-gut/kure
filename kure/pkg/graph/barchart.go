@@ -1,87 +1,68 @@
 package graph
 
-import (
-	"fmt"
-	"os"
-	"strings"
-	"text/tabwriter"
-)
+import "fmt"
 
 type BarChart struct {
 	Key   []string
-	Value []float64
+	Count []float64
 	Ratio []float64
 }
 
-func NewBarChart() *BarChart {
-	return &BarChart{
-		Key:   []string{},
-		Value: []float64{},
-		Ratio: []float64{},
+func PrintBarChart(rawData []map[string]string) error {
+
+	bc, err := fillData(rawData)
+	if err != nil {
+		return fmt.Errorf("error fill data: %w", err)
 	}
+
+	bc.print()
+
+	return nil
 }
 
-func MapToBarChart(rawData map[string]float64) (*BarChart, error) {
+func fillData(data []map[string]string) (*BarChart, error) {
+	var bc BarChart
 
-	var (
-		keys   []string
-		values []float64
-		ratio  []float64
-		bc     BarChart
-	)
+	// need to find unique keys in map
+	// keyMap = uniqueKeys
+	// The n count for number of unique keys in map
 
-	for k, v := range rawData {
-		keys = append(keys, k)
-		values = append(values, v)
-		// otherwise lenght is 0
-		ratio = append(ratio, float64(0))
+	for _, m := range data {
+		for i := range m {
+
+			for j, key := range bc.Key {
+
+				if key == i {
+					bc.Count[j]++
+					fmt.Println(key + "=" + i)
+				} else {
+					bc.Key = append(bc.Key, i)
+					bc.Count = append(bc.Count, 1)
+				}
+			}
+			if len(bc.Key) == 0 {
+				bc.Key = append(bc.Key, i)
+				bc.Count = append(bc.Count, 1)
+			}
+		}
 	}
 
-	bc.Key = keys
-	bc.Value = values
-	bc.Ratio = ratio
+	bc.ratio()
 
 	return &bc, nil
 
 }
 
-func (self *BarChart) Print() {
-
-	self.RatioCalc()
-
-	writer := tabwriter.NewWriter(os.Stdout, 2, 2, 2, ' ', 0)
-
-	title := fmt.Sprintf("%s\t%s\t%s\t%s", "Bucket Name", "Ratio", "Graph", "Count")
-	fmt.Fprintln(writer, title)
-
-	boarder := fmt.Sprintf("%s\t%s\t%s\t%s", "-----------", "-----", "-----", "-----")
-	fmt.Fprintln(writer, boarder)
-
-	for i := range self.Key {
-
-		barLength := int(self.Ratio[i]) / 2 // 100% == 50 Blocks
-		bar := strings.Repeat(string('█'), barLength)
-
-		output := fmt.Sprintf("%s\t%5.2f%%\t%s\t%5.0f", self.Key[i], self.Ratio[i], bar, self.Value[i])
-
-		fmt.Fprintln(writer, output)
-	}
-
-	writer.Flush()
-
-}
-
-func (self *BarChart) RatioCalc() {
+func (self *BarChart) ratio() {
 	var sum float64
 
 	// calculate sum
 	for i := range self.Key {
-		sum = sum + self.Value[i]
+		sum = sum + self.Count[i]
 	}
 
 	// calc and assign ratio
 	for i := range self.Key {
-		self.Ratio[i] = ((self.Value[i] * 100) / sum)
+		self.Ratio = append(self.Ratio, ((self.Count[i] * 100) / sum))
 	}
-
 }
