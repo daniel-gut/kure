@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"regexp"
 	"time"
 
 	"github.com/araddon/dateparse"
-	"github.com/aybabtme/uniplot/histogram"
 	"github.com/daniel-gut/kure/pkg/clients"
 	"github.com/daniel-gut/kure/pkg/config"
 	"github.com/daniel-gut/kure/pkg/graph"
@@ -47,61 +47,77 @@ func analyzeLog(podList []string) error {
 	}
 
 	var bcData []string
-	for _, l := range logList {
-		key, err := l.normalizeDataForPrint("nodeName")
-		bcData = append(bcData, key)
-		if err != nil {
-			return err
-		}
-	}
 
-	graph.PrintBarChart(bcData)
+	// Go through the loglist and calc stats by all fields
+
+	s := reflect.ValueOf(&logList[0]).Elem()
+	typeOfT := s.Type()
+
+	for i := 1; i < s.NumField(); i++ {
+		fieldName := typeOfT.Field(i).Name
+
+		for _, l := range logList {
+
+			key, err := l.normalizeDataForPrint(fieldName)
+			bcData = append(bcData, key)
+			if err != nil {
+				return err
+			}
+
+		}
+		graph.PrintBarChart(bcData)
+		fmt.Println()
+
+		// empty log for next field name
+		bcData = []string{}
+
+	}
 
 	return err
 }
 
-func printLogHistogramTimestamp(logList []log) {
+// func printLogHistogramTimestamp(logList []log) {
 
-	var timestampList []float64
+// 	var timestampList []float64
 
-	for _, log := range logList {
-		timestampList = append(timestampList, float64(log.timestamp.Unix()))
-	}
+// 	for _, log := range logList {
+// 		timestampList = append(timestampList, float64(log.timestamp.Unix()))
+// 	}
 
-	hist := histogram.Hist(10, timestampList)
+// 	hist := histogram.Hist(10, timestampList)
 
-	err := histogram.Fprintf(os.Stdout, hist, histogram.Linear(20), func(v float64) string {
-		return time.Unix(int64(v), 0).Format("15:04:05")
-	})
-	if err != nil {
-		panic(err)
-	}
-}
+// 	err := histogram.Fprintf(os.Stdout, hist, histogram.Linear(20), func(v float64) string {
+// 		return time.Unix(int64(v), 0).Format("15:04:05")
+// 	})
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 
-func printLogHistogramPodName(logList []log) {
+// func printLogHistogramPodName(logList []log) {
 
-	var timestampList []float64
+// 	var timestampList []float64
 
-	unique := make(map[string]bool)
-	for _, l := range logList {
-		if !unique[l.podName] {
-			unique[l.podName] = true
-		}
-	}
+// 	unique := make(map[string]bool)
+// 	for _, l := range logList {
+// 		if !unique[l.podName] {
+// 			unique[l.podName] = true
+// 		}
+// 	}
 
-	for _, log := range logList {
-		timestampList = append(timestampList, float64(log.timestamp.Unix()))
-	}
+// 	for _, log := range logList {
+// 		timestampList = append(timestampList, float64(log.timestamp.Unix()))
+// 	}
 
-	hist := histogram.Hist(20, timestampList)
+// 	hist := histogram.Hist(20, timestampList)
 
-	err := histogram.Fprintf(os.Stdout, hist, histogram.Linear(10), func(v float64) string {
-		return time.Unix(int64(v), 0).Format("15:04:05")
-	})
-	if err != nil {
-		panic(err)
-	}
-}
+// 	err := histogram.Fprintf(os.Stdout, hist, histogram.Linear(10), func(v float64) string {
+// 		return time.Unix(int64(v), 0).Format("15:04:05")
+// 	})
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 
 func getLogs(podName string) ([]log, error) {
 
@@ -130,6 +146,7 @@ func getLogs(podName string) ([]log, error) {
 		return nil, err
 	}
 	containers := pod.Spec.Containers
+	nodeName := pod.Spec.NodeName
 
 	// Get logs for all containers
 	logsAvailable := false
@@ -159,7 +176,7 @@ func getLogs(podName string) ([]log, error) {
 				return nil, fmt.Errorf("error reading stream: %w", err)
 			}
 
-			logData, err := parseLog(line, podName)
+			logData, err := parseLog(line, podName, nodeName)
 
 			if logData != (log{}) {
 				logList = append(logList, logData)
@@ -181,7 +198,7 @@ func getLogs(podName string) ([]log, error) {
 
 }
 
-func parseLog(logRaw []byte, podName string) (log, error) {
+func parseLog(logRaw []byte, podName string, nodeName string) (log, error) {
 
 	var (
 		logSince int64
@@ -209,29 +226,12 @@ func parseLog(logRaw []byte, podName string) (log, error) {
 		}
 
 		if t.Unix() > (time.Now().Unix() - logSince) {
-			logData = log{timestamp: t, loglevel: "error", podName: podName}
+			logData = log{timestamp: t, loglevel: "error", podName: podName, nodeName: nodeName}
 		}
 	}
 
 	return logData, nil
 }
-
-// func createBuckets(bd bucketData) {
-
-// 	switch bd.bucketName {
-// 	case "timestamp":
-// 		fmt.Printf("timestamp")
-// 	case "podName":
-// 		fmt.Printf("podName")
-// 	case "loglevel":
-// 		fmt.Printf("loglevel")
-// 	case "nodeName":
-// 		fmt.Printf("nodeName")
-// 	default:
-// 		fmt.Errorf("%s is a unknown field of type log", bd.bucketName)
-
-// 	}
-// }
 
 func (log log) normalizeDataForPrint(keyName string) (string, error) {
 
@@ -242,6 +242,8 @@ func (log log) normalizeDataForPrint(keyName string) (string, error) {
 		key = log.podName
 	case "nodeName":
 		key = log.nodeName
+	case "loglevel":
+		key = log.loglevel
 	default:
 		return "", fmt.Errorf("error, keyName fieldname unknown %w", keyName)
 	}

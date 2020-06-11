@@ -20,7 +20,7 @@ func (bc BarChart) print() {
 	for i := range bc.Key {
 
 		barLength := int(bc.Ratio[i]) / 2 // 100% == 50 Blocks
-		bar := strings.Repeat(string('█'), barLength)
+		bar := strings.Repeat("█", barLength)
 
 		output := fmt.Sprintf("%s\t%5.2f%%\t%s\t%5.0f", bc.Key[i], bc.Ratio[i], bar, bc.Count[i])
 
