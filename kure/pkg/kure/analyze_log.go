@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/araddon/dateparse"
@@ -66,7 +67,7 @@ func analyzeLog(podList []string) error {
 
 		}
 		graph.PrintBarChart(bcData)
-		fmt.Println()
+		fmt.Println(strings.Repeat("-", 100))
 
 		// empty log for next field name
 		bcData = []string{}
