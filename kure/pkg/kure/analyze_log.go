@@ -19,6 +19,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+const (
+	logLevelInfo    = "info"
+	logLevelWarn    = "warning"
+	logLevelErr     = "error"
+	logLevelUnknown = "unknown"
+)
+
 type log struct {
 	timestamp time.Time
 	podName   string
@@ -206,30 +213,78 @@ func parseLog(logRaw []byte, podName string, nodeName string) (log, error) {
 		logData  log
 	)
 
+	logData.nodeName = nodeName
+	logData.podName = podName
+
+	// ------------------------------------------
+	// Parse the log for the timesamp
+	// ------------------------------------------
+
 	if logSince == 0 {
 		logSince = config.LogSinceDefault
 	}
 
+	// Define the regex to match timestamps
 	a := regexp.MustCompile(`\d{4}-\d{2}-\d{2}(\ |T)\d{2}:\d{2}:\d{2}`) // 2020-04-28 07:16:00 or 2020-04-14T07:04:19
 
+	// Find all timestamps in the raw Log
 	tsd := a.FindAll(logRaw, -1)
 
+	// Unify the location to have all timestamps equal
 	loc, err := time.LoadLocation("UTC")
 	if err != nil {
 		panic(err.Error())
 	}
 
+	// Go through the timestamp slice (mostly lenght=1)
 	for _, ts := range tsd {
 
+		// Parse the found time string and change it to a value of type time
 		t, err := dateparse.ParseIn(string(ts), loc)
 		if err != nil {
 			panic(err.Error())
 		}
 
+		// Check if the value is within the defined timeframe, if yes write the log struct
 		if t.Unix() > (time.Now().Unix() - logSince) {
-			logData = log{timestamp: t, loglevel: "error", podName: podName, nodeName: nodeName}
+			logData.timestamp = t
+			// logData = log{timestamp: t, podName: podName, nodeName: nodeName}
 		}
 	}
+
+	// ------------------------------------------
+	// Parse the log for the log level
+	// ------------------------------------------
+
+	logLevel := logLevelUnknown
+
+	// Define the regex to match info level
+	logInfo := regexp.MustCompile(`info`) // "info"
+	// Find all timestamps in the raw Log
+	logInfoSlice := logInfo.FindAll(logRaw, -1)
+	// If found, set log level
+	if len(logInfoSlice) > 0 {
+		logLevel = logLevelInfo
+	}
+
+	// Define the regex to match info level
+	logWarn := regexp.MustCompile(`warn`) // "info"
+	// Find all timestamps in the raw Log
+	logWarnSlice := logWarn.FindAll(logRaw, -1)
+	// If found, set log level
+	if len(logWarnSlice) > 0 {
+		logLevel = logLevelWarn
+	}
+
+	// Define the regex to match info level
+	logErr := regexp.MustCompile(`err`) // "info"
+	// Find all timestamps in the raw Log
+	logErrSlice := logErr.FindAll(logRaw, -1)
+	if len(logErrSlice) > 0 {
+		logLevel = logLevelErr
+	}
+
+	logData.loglevel = logLevel
 
 	return logData, nil
 }
