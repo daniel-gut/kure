@@ -73,7 +73,7 @@ func analyzeLog(podList []string) error {
 			}
 
 		}
-		graph.PrintBarChart(bcData)
+		graph.PrintBarChart(bcData, fieldName)
 		fmt.Println(strings.Repeat("-", 100))
 
 		// empty log for next field name

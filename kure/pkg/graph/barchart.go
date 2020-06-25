@@ -8,14 +8,14 @@ type BarChart struct {
 	Ratio []float64
 }
 
-func PrintBarChart(rawData []string) error {
+func PrintBarChart(rawData []string, bucketName string) error {
 
 	bc, err := fillData(rawData)
 	if err != nil {
 		return fmt.Errorf("error fill data: %w", err)
 	}
 
-	bc.print()
+	bc.print(bucketName)
 
 	return nil
 }

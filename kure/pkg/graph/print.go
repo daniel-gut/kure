@@ -7,11 +7,11 @@ import (
 	"text/tabwriter"
 )
 
-func (bc BarChart) print() {
+func (bc BarChart) print(bucketName string) {
 
 	writer := tabwriter.NewWriter(os.Stdout, 2, 2, 2, ' ', 0)
 
-	title := fmt.Sprintf("%s\t%s\t%s\t%s", "Bucket Name", "Ratio", "Graph", "Count")
+	title := fmt.Sprintf("%s\t%s\t%s\t%s", bucketName, "Ratio", "Graph", "Count")
 	fmt.Fprintln(writer, title)
 
 	boarder := fmt.Sprintf("%s\t%s\t%s\t%s", "-----------", "-----", "-----", "-----")
